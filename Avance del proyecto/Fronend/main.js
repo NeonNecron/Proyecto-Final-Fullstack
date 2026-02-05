@@ -7,11 +7,20 @@ const emailInput = document.getElementById('email');
 const passwordInput = document.getElementById('password');
 const loginError = document.getElementById('login-error');
 
+const registerForm = document.getElementById('register-form');
+const registerNameInput = document.getElementById('register-name');
+const registerEmailInput = document.getElementById('register-email');
+const registerPasswordInput = document.getElementById('register-password');
+const registerError = document.getElementById('register-error');
+
 const logoutBtn = document.getElementById('logout-btn');
 const taskForm = document.getElementById('task-form');
 const taskTitleInput = document.getElementById('task-title');
 const taskDescInput = document.getElementById('task-desc');
 const taskList = document.getElementById('task-list');
+
+const showRegisterBtn = document.getElementById('show-register-btn');
+const showLoginBtn = document.getElementById('show-login-btn');
 
 let token = localStorage.getItem('token') || null;
 
@@ -68,6 +77,63 @@ loginForm.addEventListener('submit', async (e) => {
     showTasks();
   } catch (error) {
     loginError.textContent = 'Error de conexión con el servidor';
+  }
+});
+
+// FUNCIONES PARA MOSTRAR/OCULTAR SECCIONES
+function showLogin() {
+  loginSection.classList.remove('hidden');
+  registerSection.classList.add('hidden');
+  tasksSection.classList.add('hidden');
+}
+
+function showRegister() {
+  loginSection.classList.add('hidden');
+  registerSection.classList.remove('hidden');
+  tasksSection.classList.add('hidden');
+}
+
+function showTasks() {
+  loginSection.classList.add('hidden');
+  registerSection.classList.add('hidden');
+  tasksSection.classList.remove('hidden');
+  loadTasks(); // si ya tienes esta función, se usa aquí
+}
+
+// CAMBIO ENTRE LOGIN <-> REGISTRO
+showRegisterBtn.addEventListener('click', showRegister);
+showLoginBtn.addEventListener('click', showLogin);
+
+// EVENTO DE REGISTRO
+registerForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  registerError.textContent = '';
+
+  try {
+    const res = await fetch(`${API_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: registerNameInput.value,
+        email: registerEmailInput.value,
+        password: registerPasswordInput.value
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      registerError.textContent = data.message || 'Error al registrar usuario';
+      return;
+    }
+
+    // Registro exitoso → mandar al login
+    alert('Usuario registrado correctamente. Ahora inicia sesión.');
+    showLogin();
+    loginEmailInput.value = registerEmailInput.value;
+    loginPasswordInput.value = '';
+  } catch (error) {
+    registerError.textContent = 'Error de conexión con el servidor';
   }
 });
 
