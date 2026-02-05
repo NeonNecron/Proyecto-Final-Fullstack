@@ -131,3 +131,22 @@ button:active {
   border-radius: 999px;
   font-size: 0.8rem;
 }
+
+.switch-text {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: #38bdf8;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.link-button:hover {
+  text-decoration: underline;
+}
