@@ -7,20 +7,60 @@
 </head>
 <body>
   <div class="app-container">
+
+    <!-- 🔐 TARJETA DE LOGIN -->
     <section id="login-section" class="card">
       <h1>Iniciar sesión</h1>
+
       <form id="login-form">
         <label>
           Correo electrónico
-          <input type="email" id="email" required />
+          <input type="email" id="login-email" required />
         </label>
         <label>
           Contraseña
-          <input type="password" id="password" required />
+          <input type="password" id="login-password" required />
         </label>
         <button type="submit">Entrar</button>
       </form>
+
       <p id="login-error" class="error-message"></p>
+
+      <p class="switch-text">
+        ¿Aún no tienes cuenta?
+        <button type="button" id="show-register-btn" class="link-button">
+          Regístrate aquí
+        </button>
+      </p>
+    </section>
+
+    <section id="register-section" class="card hidden">
+      <h1>Crear cuenta</h1>
+
+      <form id="register-form">
+        <label>
+          Nombre
+          <input type="text" id="register-name" required />
+        </label>
+        <label>
+          Correo electrónico
+          <input type="email" id="register-email" required />
+        </label>
+        <label>
+          Contraseña
+          <input type="password" id="register-password" required />
+        </label>
+        <button type="submit">Registrarme</button>
+      </form>
+
+      <p id="register-error" class="error-message"></p>
+
+      <p class="switch-text">
+        ¿Ya tienes cuenta?
+        <button type="button" id="show-login-btn" class="link-button">
+          Inicia sesión
+        </button>
+      </p>
     </section>
 
     <section id="tasks-section" class="card hidden">
@@ -41,4 +81,5 @@
 
   <script src="main.js"></script>
 </body>
+
 </html>
