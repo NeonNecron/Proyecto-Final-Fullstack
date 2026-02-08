@@ -54,6 +54,29 @@ function showTasks() {
   loadTasks();
 }
 
+function addDeleteEvents() {
+  const deleteButtons = document.querySelectorAll(".delete-btn");
+
+  deleteButtons.forEach(button => {
+    button.addEventListener("click", async () => {
+      const taskId = button.dataset.id;
+
+      try {
+        await fetch(`http://localhost:4000/api/tasks/${taskId}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`
+          }
+        });
+
+        loadTasks(); // recargar tareas
+      } catch (error) {
+        console.error("Error eliminando tarea:", error);
+      }
+    });
+  });
+}
+
 function setToken(newToken) {
   token = newToken;
   if (token) {
@@ -178,22 +201,27 @@ async function loadTasks() {
 }
 
 function renderTasks(tasks) {
-  if (!Array.isArray(tasks)) {
-    console.error("Las tareas no son un arreglo:", tasks);
-    return;
-  }
-
   taskList.innerHTML = "";
 
   tasks.forEach(task => {
     const li = document.createElement("li");
+
     li.innerHTML = `
-      <h3>${task.title}</h3>
-      <p>${task.description}</p>
+      <div class="task-content">
+        <h3>${task.title}</h3>
+        ${task.description ? `<p>${task.description}</p>` : ""}
+      </div>
+      <button class="delete-btn" data-id="${task._id}">
+        Eliminar
+      </button>
     `;
+
     taskList.appendChild(li);
   });
+
+  addDeleteEvents();
 }
+
 
 taskForm.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -219,19 +247,9 @@ taskForm.addEventListener('submit', async (e) => {
       return;
     }
 
-    const li = document.createElement('li');
-    li.className = 'task-item';
+   // ✅ Después de crear la tarea:
+  await loadTasks();
 
-    const span = document.createElement('span');
-    span.textContent = newTask.title;
-
-    const deleteBtn = document.createElement('button');
-    deleteBtn.textContent = 'Eliminar';
-    deleteBtn.addEventListener('click', () => deleteTask(newTask._id));
-
-    li.appendChild(span);
-    li.appendChild(deleteBtn);
-    taskList.prepend(li);
 
     taskTitleInput.value = '';
     taskDescInput.value = '';
