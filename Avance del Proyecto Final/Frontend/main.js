@@ -156,36 +156,41 @@ logoutBtn.addEventListener('click', () => {
    ========================= */
 
 async function loadTasks() {
-  if (!token) return;
-
   try {
-    const res = await fetch(`${API_URL}/tasks`, {
+    const token = localStorage.getItem("token");
+
+    const response = await fetch("http://localhost:4000/api/tasks", {
       headers: {
-        Authorization: `Bearer ${token}`
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
       }
     });
-    const tasks = await res.json();
+
+    if (!response.ok) {
+      throw new Error(`Error ${response.status}`);
+    }
+
+    const tasks = await response.json();
     renderTasks(tasks);
   } catch (error) {
-    console.error(error);
+    console.error("Error cargando tareas:", error);
   }
 }
 
 function renderTasks(tasks) {
-  taskList.innerHTML = '';
-  tasks.forEach((task) => {
-    const li = document.createElement('li');
-    li.className = 'task-item';
+  if (!Array.isArray(tasks)) {
+    console.error("Las tareas no son un arreglo:", tasks);
+    return;
+  }
 
-    const span = document.createElement('span');
-    span.textContent = task.title;
+  taskList.innerHTML = "";
 
-    const deleteBtn = document.createElement('button');
-    deleteBtn.textContent = 'Eliminar';
-    deleteBtn.addEventListener('click', () => deleteTask(task._id));
-
-    li.appendChild(span);
-    li.appendChild(deleteBtn);
+  tasks.forEach(task => {
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <h3>${task.title}</h3>
+      <p>${task.description}</p>
+    `;
     taskList.appendChild(li);
   });
 }
