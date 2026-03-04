@@ -35,6 +35,8 @@ const Login = () => {
         <label>
           Correo electrónico
           <input
+            id="login-email"
+            name="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -46,6 +48,8 @@ const Login = () => {
         <label>
           Contraseña
           <input
+            id="login-password"
+            name="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}

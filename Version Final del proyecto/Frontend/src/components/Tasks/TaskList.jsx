@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import TaskForm from './TaskForm';
 import TaskItem from './TaskItem';
-import { getTasks, deleteTask, toggleTaskStatus } from '../../services/taskService';
+import { getTasks, deleteTask, toggleTaskStatus, updateTask } from '../../services/taskService';
+import api from '../../services/api';
 import './Tasks.css';
 
 const TaskList = () => {
@@ -29,13 +30,39 @@ const TaskList = () => {
     try {
       setLoading(true);
       setError('');
-      
-      const response = await getTasks(page, pagination.limit, filter.completed);
+      // Si hay un filtro activo (completadas/pendientes) pedimos más items
+      // para poder filtrar localmente cuando el backend no soporte el query param.
+      const fetchLimit = filter.completed !== null ? 1000 : pagination.limit;
+
+      const response = await getTasks(page, fetchLimit, filter.completed);
       
       // La respuesta del backend es: { data, total, pages, page }
       const { data, total, pages } = response.data;
+
+      // Si el backend no soporta el query param 'completed' y devuelve 'status' en las tareas,
+      // aplicamos un filtrado local según `filter.completed` para asegurar que la pestaña muestre lo esperado.
+      let filtered = data;
+      if (filter.completed !== null && Array.isArray(data)) {
+        if (data.length > 0 && Object.prototype.hasOwnProperty.call(data[0], 'completed')) {
+          filtered = data.filter(t => Boolean(t.completed) === Boolean(filter.completed));
+        } else if (data.length > 0 && Object.prototype.hasOwnProperty.call(data[0], 'status')) {
+          filtered = data.filter(t => {
+            const done = t.status === 'done' || t.status === 'completed' || t.status === 'Done';
+            return filter.completed ? done : !done;
+          });
+        }
+      }
+      setTasks(filtered);
+      setPagination({
+        ...pagination,
+        page,
+        // Ajustar total si filtramos localmente (fallback)
+        total: filtered.length || total,
+        totalPages: pages
+      });
       
       setTasks(data);
+      console.log('Loaded tasks count:', data.length, 'sample:', data[0]);
       setPagination({
         ...pagination,
         page,
@@ -56,37 +83,81 @@ const TaskList = () => {
   }, [filter.completed]); // Recargar cuando cambia el filtro
 
   const handleDelete = async (id) => {
-    if (!isAdmin()) {
-      setError('❌ Solo administradores pueden eliminar tareas');
+    const taskToDelete = tasks.find(t => t._id === id);
+    if (!taskToDelete) {
+      setError('Tarea no encontrada');
+      return;
+    }
+
+    // Determinar id del propietario comprobando varios posibles campos (incluye task.user que puede ser string)
+    const ownerId = taskToDelete.owner || taskToDelete.owner?._id || taskToDelete.createdBy || taskToDelete.createdBy?._id || taskToDelete.userId || taskToDelete.user || taskToDelete.user?._id || null;
+    const currentUserId = user?._id || null;
+    if (!(isAdmin() || (currentUserId && ownerId && String(currentUserId) === String(ownerId)))) {
+      console.warn('Delete permission denied. user._id:', currentUserId, 'ownerId:', ownerId, 'task:', taskToDelete);
+      setError('❌ Solo administradores o el propietario pueden eliminar tareas');
       return;
     }
 
     if (!window.confirm('¿Estás seguro de eliminar esta tarea?')) return;
+    // Verificar token antes de intentar borrar
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.warn('Delete blocked: no auth token in localStorage');
+      setError('No estás autenticado. Por favor inicia sesión.');
+      return;
+    }
+
+    // Log completo para debugging
+    console.log('Attempting delete (debug):', { id, ownerId, userId: user?._id, task: taskToDelete, tokenPresent: !!token, tokenSnippet: token ? token.slice(0,8) + '...' : 'none' });
 
     try {
       await deleteTask(id);
       // Recargar la página actual
       loadTasks(pagination.page);
     } catch (error) {
-      console.error('Error deleting task:', error);
+      console.error('Error deleting task:', error, error.response?.data || error.message);
+      const serverMsg = error.response?.data?.message || error.response?.data || null;
       if (error.response?.status === 403) {
-        setError('No tienes permiso para eliminar tareas');
+        setError(serverMsg || 'No tienes permiso para eliminar tareas');
       } else {
-        setError('Error al eliminar la tarea');
+        setError(serverMsg || 'Error al eliminar la tarea');
       }
     }
   };
 
-  const handleToggleStatus = async (id, currentStatus) => {
+  const handleToggleStatus = async (task) => {
+    // Optimistic update: actualizar UI antes de la petición
+    const prevTasks = [...tasks];
     try {
-      await toggleTaskStatus(id, !currentStatus);
-      // Actualizar la tarea en el estado local
-      setTasks(tasks.map(task => 
-        task._id === id ? { ...task, completed: !currentStatus } : task
-      ));
+      console.log('handleToggleStatus called for task:', task);
+      setError('');
+      // Derivar el estado actual con preferencia por `completed` cuando exista
+      const currentCompleted = task.completed !== undefined && task.completed !== null
+        ? Boolean(task.completed)
+        : (typeof task.status === 'string' ? (task.status === 'done' || task.status === 'completed' || task.status === 'Done') : false);
+
+      const desired = !currentCompleted;
+
+      // aplicar optimistamente (sin romper otros campos)
+      setTasks(tasks.map(t => t._id === task._id ? { ...t, completed: desired, status: desired ? 'done' : (t.status || 'todo'), isUpdating: true } : t));
+
+      // Enviar el objeto completo por PUT (algunos backends esperan la entidad completa)
+      const fullPayload = { ...task, completed: desired, status: desired ? 'done' : (task.status && task.status !== 'done' ? task.status : 'todo') };
+      const response = await updateTask(task._id, fullPayload);
+      console.log('updateTask response status:', response.status, 'data:', response.data);
+      const updated = response.data;
+      if (updated && updated._id) {
+        setTasks(prev => prev.map(t => t._id === updated._id ? { ...updated, isUpdating: false } : t));
+      } else {
+        setTasks(prev => prev.map(t => t._id === task._id ? { ...t, completed: desired, isUpdating: false } : t));
+      }
+      // Sincronizar estado desde el servidor
+      await loadTasks(pagination.page);
     } catch (error) {
-      console.error('Error toggling task:', error);
-      setError('Error al actualizar el estado');
+      console.error('Error toggling task:', error, error.response?.data || error.message);
+      setError('Error al actualizar el estado: ' + (error.response?.data?.message || error.message || 'desconocido'));
+      // revertir cambios optimistas
+      setTasks(prevTasks);
     }
   };
 
@@ -180,6 +251,7 @@ const TaskList = () => {
               task={task}
               onDelete={handleDelete}
               onToggleStatus={handleToggleStatus}
+              onUpdated={(updatedTask) => setTasks(tasks.map(t => t._id === updatedTask._id ? updatedTask : t))}
             />
           ))
         )}

@@ -49,6 +49,8 @@ const TaskForm = ({ onTaskCreated }) => {
       <h3>Crear nueva tarea</h3>
       
       <input
+        id="task-title"
+        name="title"
         type="text"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
@@ -59,6 +61,8 @@ const TaskForm = ({ onTaskCreated }) => {
       />
       
       <textarea
+        id="task-description"
+        name="description"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
         placeholder="Descripción (opcional)"
@@ -69,6 +73,8 @@ const TaskForm = ({ onTaskCreated }) => {
 
       <div className="form-row">
         <select 
+          id="task-priority"
+          name="priority"
           value={priority} 
           onChange={(e) => setPriority(e.target.value)}
           disabled={loading}
@@ -80,6 +86,8 @@ const TaskForm = ({ onTaskCreated }) => {
         </select>
 
         <select 
+          id="task-status"
+          name="status"
           value={status} 
           onChange={(e) => setStatus(e.target.value)}
           disabled={loading}
@@ -93,6 +101,8 @@ const TaskForm = ({ onTaskCreated }) => {
 
       <div className="form-row">
         <input
+          id="task-dueDate"
+          name="dueDate"
           type="date"
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}

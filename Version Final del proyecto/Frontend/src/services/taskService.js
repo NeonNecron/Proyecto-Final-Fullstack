@@ -6,9 +6,12 @@ import api from './api';
  */
 
 // Obtener todas las tareas del usuario
-export const getTasks = async () => {
+export const getTasks = async (page = 1, limit = 5, completed = null) => {
   try {
-    const response = await api.get('/tasks');
+    const params = { page, limit };
+    // sólo incluir completed si no es null
+    if (completed !== null && completed !== undefined) params.completed = completed;
+    const response = await api.get('/tasks', { params });
     return response;
   } catch (error) {
     throw error;
@@ -48,7 +51,12 @@ export const updateTask = async (id, taskData) => {
 // Eliminar una tarea
 export const deleteTask = async (id) => {
   try {
-    const response = await api.delete(`/tasks/${id}`);
+    // Debug: capture presence of token and include a short snippet as a header
+    const token = localStorage.getItem('token');
+    try { console.log('taskService.deleteTask: token present?', !!token, token ? token.slice(0, 8) + '...' : 'none'); } catch(e){}
+    const headers = { 'X-Debug-Token-Snippet': token ? token.slice(0, 8) : 'none' };
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const response = await api.delete(`/tasks/${id}`, { headers });
     return response;
   } catch (error) {
     throw error;
@@ -56,10 +64,10 @@ export const deleteTask = async (id) => {
 };
 
 // Marcar tarea como completada/no completada
-export const toggleTaskStatus = async (id, currentStatus) => {
+export const toggleTaskStatus = async (id, desiredStatus) => {
   try {
     const response = await api.patch(`/tasks/${id}`, {
-      completed: !currentStatus
+      completed: desiredStatus
     });
     return response;
   } catch (error) {

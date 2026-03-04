@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { login as apiLogin, register as apiRegister } from '../services/authService';
+import api from '../services/api';
 
 const AuthContext = createContext();
 
@@ -19,8 +20,32 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     // Verificar si hay token guardado
     if (token) {
-      // Aquí podrías verificar el token con el backend
-      setLoading(false);
+      // Intentar derivar información mínima del token (decodificar JWT)
+      try {
+        const parts = token.split('.');
+        if (parts.length === 3) {
+          const payload = JSON.parse(atob(parts[1]));
+          const possibleId = payload.sub || payload.id || payload._id || payload.userId;
+          const possibleRole = payload.role || payload.roles || payload?.role;
+          // Si aún no hay user, establecer un usuario mínimo para checks en UI
+          setUser(prev => prev || { _id: possibleId, role: possibleRole });
+        }
+      } catch (e) {
+        // ignore decode errors
+      }
+
+      // Intentar obtener el usuario completo desde el backend si el endpoint existe
+      (async () => {
+        try {
+          const resp = await api.get('/auth/me');
+          const serverUser = resp.data?.user || resp.data;
+          if (serverUser) setUser(serverUser);
+        } catch (e) {
+          // Si no existe /auth/me, no es crítico — el usuario puede venir del login
+        } finally {
+          setLoading(false);
+        }
+      })();
     } else {
       setLoading(false);
     }
@@ -60,13 +85,18 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const isAdmin = () => {
+    return user?.role === 'admin';
+  };
+
   const value = {
     user,
     token,
     loading,
     login,
     register,
-    logout
+    logout,
+    isAdmin
   };
 
   return (
