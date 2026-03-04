@@ -28,10 +28,11 @@ const Login = () => {
   };
 
   return (
-    <div className="card">
-      <h1>Iniciar sesión</h1>
-      
-      <form onSubmit={handleSubmit}>
+    <div className="auth-container">
+      <div className="card">
+        <h1>Iniciar sesión</h1>
+        
+        <form onSubmit={handleSubmit}>
         <label>
           Correo electrónico
           <input
@@ -71,6 +72,7 @@ const Login = () => {
           Regístrate aquí
         </Link>
       </p>
+      </div>
     </div>
   );
 };
