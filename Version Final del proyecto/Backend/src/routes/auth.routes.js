@@ -1,190 +1,113 @@
 const express = require('express');
-const Task = require('../models/Task');
-const { protect, authorize } = require('../middleware/auth');
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
 const router = express.Router();
 
-// ===============================
-// Todas las rutas requieren login
-// ===============================
-router.use(protect);
+
+// 🔐 Generar JWT
+const generateToken = (user) => {
+  return jwt.sign(
+    {
+      id: user._id,
+      role: user.role
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: '1h' }
+  );
+};
 
 
 // ===============================
-// GET /api/tasks
-// Listar con paginación y filtros
+// POST /api/auth/register
 // ===============================
-router.get('/', async (req, res, next) => {
+router.post('/register', async (req, res, next) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 5;
-    const skip = (page - 1) * limit;
+    const { name, email, password, role } = req.body;
 
-    const filter = { user: req.user._id };
-
-    if (req.query.completed !== undefined) {
-      filter.completed = req.query.completed === 'true';
-    }
-
-    const total = await Task.countDocuments(filter);
-
-    const tasks = await Task.find(filter)
-      .sort('-createdAt')
-      .skip(skip)
-      .limit(limit);
-
-    res.json({
-      total,
-      page,
-      pages: Math.ceil(total / limit),
-      data: tasks
-    });
-
-  } catch (error) {
-    next(error);
-  }
-});
-
-
-// ===============================
-// GET /api/tasks/:id
-// ===============================
-router.get('/:id', async (req, res, next) => {
-  try {
-    const task = await Task.findOne({
-      _id: req.params.id,
-      user: req.user._id
-    });
-
-    if (!task) {
-      const err = new Error('Tarea no encontrada');
-      err.statusCode = 404;
-      return next(err);
-    }
-
-    res.json(task);
-
-  } catch (error) {
-    next(error);
-  }
-});
-
-
-// ===============================
-// POST /api/tasks
-// ===============================
-router.post('/', async (req, res, next) => {
-  try {
-    const { title, description, priority, status, dueDate } = req.body;
-
-    if (!title) {
-      const err = new Error('El título es obligatorio');
+    if (!name || !email || !password) {
+      const err = new Error('Todos los campos son obligatorios');
       err.statusCode = 400;
       return next(err);
     }
 
-    const taskData = {
-      title,
-      description,
-      user: req.user._id
-    };
-
-    // ✅ Guardar campos opcionales si vienen en la petición
-    if (priority) taskData.priority = priority;
-    if (status) taskData.status = status;
-    if (dueDate) taskData.dueDate = dueDate;
-
-    const task = await Task.create(taskData);
-    res.status(201).json(task);
-
-  } catch (error) {
-    next(error);
-  }
-});
-
-
-// ===============================
-// PUT /api/tasks/:id
-// ===============================
-router.put('/:id', async (req, res, next) => {
-  try {
-    const { title, description, completed, priority, status, dueDate } = req.body;
-
-    const updateData = {};
-
-    // ✅ Solo actualizar los campos que vienen en la petición
-    if (title !== undefined) updateData.title = title;
-    if (description !== undefined) updateData.description = description;
-    if (completed !== undefined) updateData.completed = completed;
-    if (priority !== undefined) updateData.priority = priority;
-    if (status !== undefined) updateData.status = status;
-    if (dueDate !== undefined) updateData.dueDate = dueDate;
-
-    const task = await Task.findOneAndUpdate(
-      { _id: req.params.id, user: req.user._id },
-      updateData,
-      { new: true }
-    );
-
-    if (!task) {
-      const err = new Error('Tarea no encontrada');
-      err.statusCode = 404;
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      const err = new Error('El correo ya está registrado');
+      err.statusCode = 400;
       return next(err);
     }
 
-    res.json(task);
-
-  } catch (error) {
-    next(error);
-  }
-});
-
-
-// ===============================
-// PATCH /api/tasks/:id/status
-// ===============================
-router.patch('/:id/status', async (req, res, next) => {
-  try {
-    const { completed } = req.body;
-
-    const task = await Task.findOneAndUpdate(
-      { _id: req.params.id, user: req.user._id },
-      { completed },
-      { new: true }
-    );
-
-    if (!task) {
-      const err = new Error('Tarea no encontrada');
-      err.statusCode = 404;
-      return next(err);
-    }
-
-    res.json(task);
-
-  } catch (error) {
-    next(error);
-  }
-});
-
-
-// ===============================
-// DELETE /api/tasks/:id
-// Elimina la tarea si pertenece al usuario autenticado
-// ===============================
-router.delete('/:id', async (req, res, next) => {
-  try {
-    const task = await Task.findOneAndDelete({
-      _id: req.params.id,
-      user: req.user._id
+    // Crear usuario (el password se encripta automáticamente en el modelo)
+    const user = await User.create({
+      name,
+      email,
+      password,
+      role: role || 'user'
     });
 
-    if (!task) {
-      const err = new Error('Tarea no encontrada o no autorizada');
-      err.statusCode = 404;
+    const token = generateToken(user);
+
+    res.status(201).json({
+      message: 'Usuario registrado correctamente',
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
+
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+// ===============================
+// POST /api/auth/login
+// ===============================
+router.post('/login', async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      const err = new Error('Email y contraseña son obligatorios');
+      err.statusCode = 400;
       return next(err);
     }
 
-    res.json({ message: 'Tarea eliminada' });
+    // IMPORTANTE: traer password
+    const user = await User.findOne({ email }).select('+password');
+
+    if (!user) {
+      const err = new Error('Credenciales inválidas');
+      err.statusCode = 401;
+      return next(err);
+    }
+
+    const isMatch = await user.matchPassword(password);
+
+    if (!isMatch) {
+      const err = new Error('Credenciales inválidas');
+      err.statusCode = 401;
+      return next(err);
+    }
+
+    const token = generateToken(user);
+
+    res.json({
+      message: 'Login exitoso',
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
+
   } catch (error) {
     next(error);
   }
