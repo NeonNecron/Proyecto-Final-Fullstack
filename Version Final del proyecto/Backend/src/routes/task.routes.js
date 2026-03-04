@@ -153,20 +153,22 @@ router.patch('/:id/status', async (req, res, next) => {
 
 // ===============================
 // DELETE /api/tasks/:id
-// Solo ADMIN puede eliminar
+// Elimina la tarea si pertenece al usuario autenticado
 // ===============================
-router.delete('/:id', authorize('admin'), async (req, res, next) => {
+router.delete('/:id', async (req, res, next) => {
   try {
-    const task = await Task.findByIdAndDelete(req.params.id);
+    const task = await Task.findOneAndDelete({
+      _id: req.params.id,
+      user: req.user._id   // solo si la tarea es del usuario
+    });
 
     if (!task) {
-      const err = new Error('Tarea no encontrada');
+      const err = new Error('Tarea no encontrada o no autorizada');
       err.statusCode = 404;
       return next(err);
     }
 
-    res.json({ message: 'Tarea eliminada por admin' });
-
+    res.json({ message: 'Tarea eliminada' });
   } catch (error) {
     next(error);
   }
