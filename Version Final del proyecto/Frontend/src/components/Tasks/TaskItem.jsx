@@ -44,7 +44,9 @@ const TaskItem = ({ task, onDelete, onToggleStatus, onUpdated }) => {
 
   // Determinar propietario comprobando múltiples campos que el backend puede usar
   const ownerId = task.owner || task.owner?._id || task.createdBy || task.createdBy?._id || task.userId || task.user || null;
-  const canModify = isAdmin() || (user?._id && ownerId && String(user._id) === String(ownerId));
+  // Por ahora permitir editar a todos. Cuando el sistema admin esté listo, refinar con:
+  // const canModify = isAdmin() || (user?._id && ownerId && String(user._id) === String(ownerId));
+  const canModify = true;
 
   return (
     <div className={`task-item priority-${task.priority}`}>
