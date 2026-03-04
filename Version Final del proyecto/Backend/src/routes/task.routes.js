@@ -75,7 +75,7 @@ router.get('/:id', async (req, res, next) => {
 // ===============================
 router.post('/', async (req, res, next) => {
   try {
-    const { title, description } = req.body;
+    const { title, description, priority, status, dueDate } = req.body;
 
     if (!title) {
       const err = new Error('El título es obligatorio');
@@ -83,12 +83,18 @@ router.post('/', async (req, res, next) => {
       return next(err);
     }
 
-    const task = await Task.create({
+    const taskData = {
       title,
       description,
       user: req.user._id
-    });
+    };
 
+    // ✅ Guardar campos opcionales si vienen en la petición
+    if (priority) taskData.priority = priority;
+    if (status) taskData.status = status;
+    if (dueDate) taskData.dueDate = dueDate;
+
+    const task = await Task.create(taskData);
     res.status(201).json(task);
 
   } catch (error) {
@@ -102,11 +108,21 @@ router.post('/', async (req, res, next) => {
 // ===============================
 router.put('/:id', async (req, res, next) => {
   try {
-    const { title, description, completed } = req.body;
+    const { title, description, completed, priority, status, dueDate } = req.body;
+
+    const updateData = {};
+
+    // ✅ Solo actualizar los campos que vienen en la petición
+    if (title !== undefined) updateData.title = title;
+    if (description !== undefined) updateData.description = description;
+    if (completed !== undefined) updateData.completed = completed;
+    if (priority !== undefined) updateData.priority = priority;
+    if (status !== undefined) updateData.status = status;
+    if (dueDate !== undefined) updateData.dueDate = dueDate;
 
     const task = await Task.findOneAndUpdate(
       { _id: req.params.id, user: req.user._id },
-      { title, description, completed },
+      updateData,
       { new: true }
     );
 
@@ -159,7 +175,7 @@ router.delete('/:id', async (req, res, next) => {
   try {
     const task = await Task.findOneAndDelete({
       _id: req.params.id,
-      user: req.user._id   // solo si la tarea es del usuario
+      user: req.user._id
     });
 
     if (!task) {
