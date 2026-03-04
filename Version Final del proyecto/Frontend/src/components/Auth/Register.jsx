@@ -33,8 +33,9 @@ const Register = () => {
   };
 
   return (
-    <div className="card">
-      <h1>Crear cuenta</h1>
+    <div className="auth-container">
+      <div className="card">
+        <h1>Crear cuenta</h1>
       
       {success ? (
         <p style={{ color: '#4ade80', textAlign: 'center' }}>
@@ -96,6 +97,7 @@ const Register = () => {
           Inicia sesión
         </Link>
       </p>
+      </div>
     </div>
   );
 };
