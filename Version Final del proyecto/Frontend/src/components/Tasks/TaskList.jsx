@@ -251,7 +251,7 @@ const TaskList = () => {
               task={task}
               onDelete={handleDelete}
               onToggleStatus={handleToggleStatus}
-              onUpdated={(updatedTask) => setTasks(tasks.map(t => t._id === updatedTask._id ? updatedTask : t))}
+              onUpdated={(updatedTask) => setTasks(prev => prev.map(t => t._id === updatedTask._id ? updatedTask : t))}
             />
           ))
         )}
