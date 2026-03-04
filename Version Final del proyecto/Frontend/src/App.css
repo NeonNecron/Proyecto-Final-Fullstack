@@ -17,6 +17,90 @@
   animation: fadeInUp 0.5s ease;
 }
 
+/* Contenedor para formularios de autenticación */
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 90vh;
+  padding: 2rem;
+}
+
+/* Estilo de tarjetas (card) genéricas */
+.card {
+  width: 100%;
+  max-width: 400px;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  color: white;
+  animation: fadeInUp 0.5s ease;
+}
+
+.card h1 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-size: 2rem;
+}
+
+.card form label {
+  display: block;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.card input {
+  width: 100%;
+  padding: 0.75rem;
+  margin-top: 0.25rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+}
+
+.card button {
+  width: 100%;
+  padding: 0.75rem;
+  margin-top: 1rem;
+  background: linear-gradient(135deg,#4f46e5,#3b82f6);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.card button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.card button:hover:not(:disabled) {
+  background: linear-gradient(135deg,#3b82f6,#4f46e5);
+}
+
+.error-message {
+  color: #f87171;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.switch-text {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.link-button {
+  color: #fff;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
 /* Animaciones */
 @keyframes fadeInUp {
   from {
