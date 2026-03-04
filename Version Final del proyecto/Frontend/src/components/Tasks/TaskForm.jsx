@@ -27,7 +27,9 @@ const TaskForm = ({ onTaskCreated }) => {
         ...(dueDate && { dueDate })
       };
 
+      console.log('Creating task with payload', taskData);
       const response = await createTask(taskData);
+      console.log('Create response', response.data);
       onTaskCreated(response.data);
       
       // Reset form
