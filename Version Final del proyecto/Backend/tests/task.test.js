@@ -87,12 +87,18 @@ describe('TASK ROUTES', () => {
     expect(res.statusCode).toBe(401);
   });
 
-  it('Admin debe eliminar tarea', async () => {
+  it('Debe eliminar tarea', async () => {
     const res = await request(app)
       .delete(`/api/tasks/${createdTaskId}`)
-      .set('Authorization', `Bearer ${adminToken}`);
+      .set('Authorization', `Bearer ${userToken}`);
 
     expect(res.statusCode).toBe(200);
-  });
+    expect(res.body).toHaveProperty('message', 'Tarea eliminada');
 
+    // Verificar que la tarea ya no existe
+    const getRes = await request(app)
+      .get(`/api/tasks/${createdTaskId}`)
+      .set('Authorization', `Bearer ${userToken}`);
+    expect(getRes.statusCode).toBe(404);
+  });
 });
