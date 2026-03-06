@@ -14,18 +14,18 @@ const TaskItem = ({ task, onDelete, onToggleStatus, onUpdated }) => {
 
   const getPriorityInfo = (priority) => {
     const info = {
-      low: { color: '#10b981', label: 'Baja', icon: '🔵' },
-      medium: { color: '#f59e0b', label: 'Media', icon: '🟡' },
-      high: { color: '#ef4444', label: 'Alta', icon: '🔴' }
+      low: { color: '#94a3b8', label: 'Bajo interés', icon: '👌' },
+      medium: { color: '#f59e0b', label: 'Interés medio', icon: '⭐' },
+      high: { color: '#ef4444', label: 'Alto interés', icon: '🔥' }
     };
     return info[priority] || info.medium;
   };
 
   const getStatusInfo = (status) => {
     const info = {
-      'todo': { icon: '📝', label: 'Por hacer' },
-      'in-progress': { icon: '⚙️', label: 'En progreso' },
-      'done': { icon: '✅', label: 'Completado' }
+      'todo': { icon: '⏳', label: 'Pendiente' },
+      'in-progress': { icon: '🎥', label: 'Viendo ahora' },
+      'done': { icon: '✅', label: 'Vista' }
     };
     return info[status] || info.todo;
   };
@@ -42,11 +42,7 @@ const TaskItem = ({ task, onDelete, onToggleStatus, onUpdated }) => {
   const priorityInfo = getPriorityInfo(task.priority);
   const statusInfo = getStatusInfo(task.status);
 
-  // Determinar propietario comprobando múltiples campos que el backend puede usar
-  const ownerId = task.owner || task.owner?._id || task.createdBy || task.createdBy?._id || task.userId || task.user || null;
-  // Por ahora permitir editar a todos. Cuando el sistema admin esté listo, refinar con:
-  // const canModify = isAdmin() || (user?._id && ownerId && String(user._id) === String(ownerId));
-  const canModify = true;
+  const canModify = true; // Todos pueden editar/eliminar por ahora
 
   return (
     <div className={`task-item priority-${task.priority}`}>
@@ -68,89 +64,89 @@ const TaskItem = ({ task, onDelete, onToggleStatus, onUpdated }) => {
               onUpdated && onUpdated(response.data);
               setIsEditing(false);
             } catch (err) {
-              console.error('Error updating task:', err);
-              alert('Error al actualizar la tarea');
+              console.error('Error updating movie:', err);
+              alert('Error al actualizar la película');
             } finally {
               setSaving(false);
             }
           }}
         >
-            <input name="title" value={title} onChange={(e) => setTitle(e.target.value)} className="form-input" required />
-            <textarea name="description" value={description} onChange={(e) => setDescription(e.target.value)} className="form-textarea" rows="2" />
+            <input name="title" value={title} onChange={(e) => setTitle(e.target.value)} className="form-input" placeholder="Título de la película" required />
+            <textarea name="description" value={description} onChange={(e) => setDescription(e.target.value)} className="form-textarea" placeholder="Sinopsis o notas" rows="2" />
           <div className="form-row">
             <select name="priority" value={priority} onChange={(e) => setPriority(e.target.value)} className="form-select">
-              <option value="low">🔵 Baja prioridad</option>
-              <option value="medium">🟡 Media prioridad</option>
-              <option value="high">🔴 Alta prioridad</option>
+              <option value="high">🔥 Alto interés (quiero verla ya)</option>
+              <option value="medium">⭐ Interés medio</option>
+              <option value="low">👌 Bajo interés (tal vez después)</option>
             </select>
 
             <select name="status" value={status} onChange={(e) => setStatus(e.target.value)} className="form-select">
-              <option value="todo">📝 Por hacer</option>
-              <option value="in-progress">⚙️ En progreso</option>
-              <option value="done">✅ Completado</option>
+              <option value="todo">⏳ Pendiente</option>
+              <option value="in-progress">🎥 Viendo ahora</option>
+              <option value="done">✅ Vista</option>
             </select>
           </div>
 
-          <input name="dueDate" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="form-input" />
+          <input name="dueDate" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="form-input" placeholder="Fecha para ver" />
 
           <div className="task-actions">
-            <button type="submit" className="save-btn" disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</button>
-            <button type="button" className="cancel-btn" onClick={() => setIsEditing(false)} disabled={saving}>Cancelar</button>
+            <button type="submit" className="save-btn" disabled={saving}>{saving ? 'Guardando...' : '💾 Guardar'}</button>
+            <button type="button" className="cancel-btn" onClick={() => setIsEditing(false)} disabled={saving}>❌ Cancelar</button>
           </div>
         </form>
       ) : (
         <>
           <div className="task-header">
-        <h3>
-          {statusInfo.icon} {task.title}
-        </h3>
-        <span 
-          className="priority-badge"
-          style={{ backgroundColor: priorityInfo.color }}
-        >
-          {priorityInfo.icon} {priorityInfo.label}
-        </span>
-      </div>
-      
-      {task.description && (
-        <p className="task-description">{task.description}</p>
-      )}
-      
-      <div className="task-meta">
-        {task.dueDate && (
-          <span className="due-date">
-            📅 Vence: {formatDate(task.dueDate)}
-          </span>
-        )}
-        <span className="status-badge">
-          {statusInfo.icon} {statusInfo.label}
-        </span>
-        <span className="created-date">
-          🕒 Creada: {formatDate(task.createdAt)}
-        </span>
-      </div>
-
-      <div className="task-actions">
-        <button 
-          onClick={() => onToggleStatus(task)}
-          className="toggle-btn"
-          disabled={task.isUpdating}
-        >
-          {task.isUpdating ? 'Actualizando...' : (task.completed ? '↩️ Reabrir' : '✅ Completar')}
-        </button>
-        
-        {canModify && (
-          <>
-            <button type="button" onClick={() => setIsEditing(true)} className="edit-btn">✏️ Editar</button>
-            <button 
-              onClick={() => onDelete(task._id)} 
-              className="delete-btn"
+            <h3>
+              {statusInfo.icon} {task.title}
+            </h3>
+            <span 
+              className="priority-badge"
+              style={{ backgroundColor: priorityInfo.color }}
             >
-              🗑️ Eliminar
+              {priorityInfo.icon} {priorityInfo.label}
+            </span>
+          </div>
+          
+          {task.description && (
+            <p className="task-description">{task.description}</p>
+          )}
+          
+          <div className="task-meta">
+            {task.dueDate && (
+              <span className="due-date">
+                📅 Fecha para ver: {formatDate(task.dueDate)}
+              </span>
+            )}
+            <span className="status-badge">
+              {statusInfo.icon} {statusInfo.label}
+            </span>
+            <span className="created-date">
+              🕒 Agregada: {formatDate(task.createdAt)}
+            </span>
+          </div>
+
+          <div className="task-actions">
+            <button 
+              onClick={() => onToggleStatus(task)}
+              className="toggle-btn"
+              disabled={task.isUpdating}
+            >
+              {task.isUpdating ? 'Actualizando...' : (task.completed ? '↩️ Marcar como pendiente' : '✅ Marcar como vista')}
             </button>
-          </>
-        )}
-      </div>
+            
+            {canModify && (
+              <>
+                <button type="button" onClick={() => setIsEditing(true)} className="edit-btn">✏️ Editar</button>
+                <button 
+                  onClick={() => onDelete(task._id)} 
+                  className="delete-btn"
+                >
+                  🗑️ Quitar de la lista
+                </button>
+              </>
+            )}
+          </div>
         </>
       )}
     </div>
