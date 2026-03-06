@@ -21,7 +21,7 @@ const TaskList = () => {
   
   // Filtros
   const [filter, setFilter] = useState({
-    completed: null  // null = todas, true = completadas, false = pendientes
+    completed: null  // null = todas, true = vistas, false = pendientes
   });
   
   const { isAdmin, user, logout } = useAuth();
@@ -30,7 +30,7 @@ const TaskList = () => {
     try {
       setLoading(true);
       setError('');
-      // Si hay un filtro activo (completadas/pendientes) pedimos más items
+      // Si hay un filtro activo (vistas/pendientes) pedimos más items
       // para poder filtrar localmente cuando el backend no soporte el query param.
       const fetchLimit = filter.completed !== null ? 1000 : pagination.limit;
 
@@ -62,7 +62,7 @@ const TaskList = () => {
       });
       
       setTasks(data);
-      console.log('Loaded tasks count:', data.length, 'sample:', data[0]);
+      console.log('Películas cargadas:', data.length, 'ejemplo:', data[0]);
       setPagination({
         ...pagination,
         page,
@@ -71,8 +71,8 @@ const TaskList = () => {
       });
       
     } catch (error) {
-      console.error('Error loading tasks:', error);
-      setError('Error al cargar las tareas');
+      console.error('Error cargando películas:', error);
+      setError('Error al cargar las películas');
     } finally {
       setLoading(false);
     }
@@ -85,7 +85,7 @@ const TaskList = () => {
   const handleDelete = async (id) => {
     const taskToDelete = tasks.find(t => t._id === id);
     if (!taskToDelete) {
-      setError('Tarea no encontrada');
+      setError('Película no encontrada');
       return;
     }
 
@@ -93,12 +93,12 @@ const TaskList = () => {
     const ownerId = taskToDelete.owner || taskToDelete.owner?._id || taskToDelete.createdBy || taskToDelete.createdBy?._id || taskToDelete.userId || taskToDelete.user || taskToDelete.user?._id || null;
     const currentUserId = user?._id || null;
     if (!(isAdmin() || (currentUserId && ownerId && String(currentUserId) === String(ownerId)))) {
-      console.warn('Delete permission denied. user._id:', currentUserId, 'ownerId:', ownerId, 'task:', taskToDelete);
-      setError('❌ Solo administradores o el propietario pueden eliminar tareas');
+      console.warn('Permiso de eliminación denegado. user._id:', currentUserId, 'ownerId:', ownerId, 'película:', taskToDelete);
+      setError('❌ Solo administradores o el propietario pueden eliminar películas');
       return;
     }
 
-    if (!window.confirm('¿Estás seguro de eliminar esta tarea?')) return;
+    if (!window.confirm('¿Estás seguro de eliminar esta película de tu lista?')) return;
     // Verificar token antes de intentar borrar
     const token = localStorage.getItem('token');
     if (!token) {
@@ -115,12 +115,12 @@ const TaskList = () => {
       // Recargar la página actual
       loadTasks(pagination.page);
     } catch (error) {
-      console.error('Error deleting task:', error, error.response?.data || error.message);
+      console.error('Error deleting movie:', error, error.response?.data || error.message);
       const serverMsg = error.response?.data?.message || error.response?.data || null;
       if (error.response?.status === 403) {
-        setError(serverMsg || 'No tienes permiso para eliminar tareas');
+        setError(serverMsg || 'No tienes permiso para eliminar películas');
       } else {
-        setError(serverMsg || 'Error al eliminar la tarea');
+        setError(serverMsg || 'Error al eliminar la película');
       }
     }
   };
@@ -129,7 +129,7 @@ const TaskList = () => {
     // Optimistic update: actualizar UI antes de la petición
     const prevTasks = [...tasks];
     try {
-      console.log('handleToggleStatus called for task:', task);
+      console.log('handleToggleStatus called for movie:', task);
       setError('');
       // Derivar el estado actual con preferencia por `completed` cuando exista
       const currentCompleted = task.completed !== undefined && task.completed !== null
@@ -154,7 +154,7 @@ const TaskList = () => {
       // Sincronizar estado desde el servidor
       await loadTasks(pagination.page);
     } catch (error) {
-      console.error('Error toggling task:', error, error.response?.data || error.message);
+      console.error('Error toggling movie:', error, error.response?.data || error.message);
       setError('Error al actualizar el estado: ' + (error.response?.data?.message || error.message || 'desconocido'));
       // revertir cambios optimistas
       setTasks(prevTasks);
@@ -162,7 +162,7 @@ const TaskList = () => {
   };
 
   const handleTaskCreated = (newTask) => {
-    // Ir a la primera página para ver la nueva tarea
+    // Ir a la primera página para ver la nueva película
     loadTasks(1);
   };
 
@@ -183,7 +183,7 @@ const TaskList = () => {
       <div className="tasks-container">
         <div className="loading">
           <div className="loading-spinner"></div>
-          <p>Cargando tareas...</p>
+          <p>Cargando películas...</p>
         </div>
       </div>
     );
@@ -193,7 +193,7 @@ const TaskList = () => {
     <div className="tasks-container">
       <div className="tasks-header">
         <div>
-          <h1>Mis Tareas</h1>
+          <h1>🎬 Mi Lista de Películas</h1>
           {user && (
             <p className="user-role">
               Rol: <span className={`role-${user.role}`}>{user.role}</span>
@@ -225,7 +225,7 @@ const TaskList = () => {
           className={`filter-btn ${filter.completed === true ? 'active' : ''}`}
           onClick={() => handleFilterChange(true)}
         >
-          Completadas
+          Vistas
         </button>
       </div>
 
@@ -234,13 +234,13 @@ const TaskList = () => {
       <div className="tasks-list">
         {tasks.length === 0 ? (
           <div className="no-tasks">
-            <p>No hay tareas para mostrar</p>
+            <p>No hay películas en tu lista</p>
             {filter.completed !== null && (
               <button 
                 className="filter-btn"
                 onClick={() => handleFilterChange(null)}
               >
-                Ver todas las tareas
+                Ver todas las películas
               </button>
             )}
           </div>
@@ -285,7 +285,7 @@ const TaskList = () => {
       {/* Info de total */}
       {pagination.total > 0 && (
         <p style={{ textAlign: 'center', color: '#94a3b8', marginTop: '1rem' }}>
-          Total: {pagination.total} tarea{pagination.total !== 1 ? 's' : ''}
+          Total: {pagination.total} película{pagination.total !== 1 ? 's' : ''}
         </p>
       )}
     </div>
