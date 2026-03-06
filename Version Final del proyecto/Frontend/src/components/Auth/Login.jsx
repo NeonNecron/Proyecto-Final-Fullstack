@@ -21,57 +21,67 @@ const Login = () => {
     if (result.success) {
       navigate('/tasks');
     } else {
-      setError(result.error);
+      setError(result.error || 'Credenciales incorrectas');
     }
     
     setLoading(false);
   };
 
   return (
-    <div className="auth-container">
-      <div className="card">
-        <h1>Iniciar sesión</h1>
+    <div className="login-container">
+      <div className="login-card">
+        <h1 className="login-title">Iniciar sesión</h1>
         
-        <form onSubmit={handleSubmit}>
-        <label>
-          Correo electrónico
-          <input
-            id="login-email"
-            name="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            disabled={loading}
-          />
-        </label>
-        
-        <label>
-          Contraseña
-          <input
-            id="login-password"
-            name="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            disabled={loading}
-          />
-        </label>
-        
-        <button type="submit" disabled={loading}>
-          {loading ? 'Cargando...' : 'Entrar'}
-        </button>
-      </form>
+        <p className="login-subtitle">
+          Elige tu usuario para continuar
+        </p>
 
-      {error && <p className="error-message">{error}</p>}
+        <form onSubmit={handleSubmit} className="login-form">
+          <div className="form-group">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Correo electrónico"
+              required
+              disabled={loading}
+              className="login-input"
+            />
+          </div>
 
-      <p className="switch-text">
-        ¿Aún no tienes cuenta?{' '}
-        <Link to="/register" className="link-button">
-          Regístrate aquí
-        </Link>
-      </p>
+          <div className="form-group">
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Contraseña"
+              required
+              disabled={loading}
+              className="login-input"
+            />
+          </div>
+
+          {error && (
+            <div className="login-error">
+              {error}
+            </div>
+          )}
+
+          <button 
+            type="submit" 
+            disabled={loading} 
+            className="login-button"
+          >
+            {loading ? 'Cargando...' : 'Enviar'}
+          </button>
+        </form>
+
+        <p className="login-footer">
+          ¿Aún no tienes cuenta?{' '}
+          <Link to="/register" className="login-link">
+            Regístrate aquí
+          </Link>
+        </p>
       </div>
     </div>
   );
