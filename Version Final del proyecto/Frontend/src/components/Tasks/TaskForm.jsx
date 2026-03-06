@@ -13,13 +13,13 @@ const TaskForm = ({ onTaskCreated }) => {
     e.preventDefault();
     
     if (!title.trim()) {
-      alert('El título es obligatorio');
+      alert('El título de la película es obligatorio');
       return;
     }
 
     setLoading(true);
     try {
-      const taskData = {
+      const movieData = {
         title: title.trim(),
         description: description.trim() || undefined,
         priority,
@@ -27,9 +27,9 @@ const TaskForm = ({ onTaskCreated }) => {
         ...(dueDate && { dueDate })
       };
 
-      console.log('Creating task with payload', taskData);
-      const response = await createTask(taskData);
-      console.log('Create response', response.data);
+      console.log('Adding movie:', movieData);
+      const response = await createTask(movieData);
+      console.log('Movie added:', response.data);
       onTaskCreated(response.data);
       
       // Reset form
@@ -39,8 +39,8 @@ const TaskForm = ({ onTaskCreated }) => {
       setStatus('todo');
       setDueDate('');
     } catch (error) {
-      console.error('Error al crear tarea:', error);
-      alert('Error al crear la tarea');
+      console.error('Error al agregar película:', error);
+      alert('Error al agregar la película');
     } finally {
       setLoading(false);
     }
@@ -48,26 +48,26 @@ const TaskForm = ({ onTaskCreated }) => {
 
   return (
     <form onSubmit={handleSubmit} className="task-form">
-      <h3>Crear nueva tarea</h3>
+      <h3>🎬 Agregar nueva película</h3>
       
       <input
-        id="task-title"
+        id="movie-title"
         name="title"
         type="text"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        placeholder="Título de la tarea *"
+        placeholder="Título de la película *"
         required
         disabled={loading}
         className="form-input"
       />
       
       <textarea
-        id="task-description"
+        id="movie-description"
         name="description"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
-        placeholder="Descripción (opcional)"
+        placeholder="Sinopsis o notas (opcional)"
         disabled={loading}
         className="form-textarea"
         rows="3"
@@ -75,46 +75,47 @@ const TaskForm = ({ onTaskCreated }) => {
 
       <div className="form-row">
         <select 
-          id="task-priority"
+          id="movie-priority"
           name="priority"
           value={priority} 
           onChange={(e) => setPriority(e.target.value)}
           disabled={loading}
           className="form-select"
         >
-          <option value="low">🔵 Baja prioridad</option>
-          <option value="medium">🟡 Media prioridad</option>
-          <option value="high">🔴 Alta prioridad</option>
+          <option value="high">🔥 Alta (quiero verla ya)</option>
+          <option value="medium">⭐ Media (me interesa)</option>
+          <option value="low">👌 Baja (tal vez después)</option>
         </select>
 
         <select 
-          id="task-status"
+          id="movie-status"
           name="status"
           value={status} 
           onChange={(e) => setStatus(e.target.value)}
           disabled={loading}
           className="form-select"
         >
-          <option value="todo">📝 Por hacer</option>
-          <option value="in-progress">⚙️ En progreso</option>
-          <option value="done">✅ Completado</option>
+          <option value="todo">⏳ Pendiente</option>
+          <option value="in-progress">🎥 Viendo ahora</option>
+          <option value="done">✅ Vista</option>
         </select>
       </div>
 
       <div className="form-row">
         <input
-          id="task-dueDate"
+          id="movie-duedate"
           name="dueDate"
           type="date"
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
           disabled={loading}
           className="form-input"
+          placeholder="Fecha para ver"
         />
       </div>
 
       <button type="submit" disabled={loading} className="submit-btn">
-        {loading ? 'Creando...' : '➕ Crear Tarea'}
+        {loading ? 'Agregando...' : '➕ Agregar película'}
       </button>
     </form>
   );
